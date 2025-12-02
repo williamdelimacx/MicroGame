@@ -7,31 +7,14 @@ using Play.Catalog.Service.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-BsonSerializer.RegisterSerializer(new GuidSerializer(MongoDB.Bson.BsonType.String));
-BsonSerializer.RegisterSerializer(new DecimalSerializer(MongoDB.Bson.BsonType.String));
-BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(MongoDB.Bson.BsonType.String));
-
 var configuration = builder.Configuration;
 
 var serviceSettings = configuration
     .GetSection(nameof(ServiceSettings))
     .Get<ServiceSettings>();
 
-var mongoDbSettings = configuration
-    .GetSection(nameof(MongoDbSettings))
-    .Get<MongoDbSettings>();
-
-builder.Services.AddSingleton(serviceProvider =>
-{
-  var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
-  return mongoClient.GetDatabase(serviceSettings.ServiceName);
-});
-
-builder.Services.AddSingleton<IRepository<Item>>(serviceProvider =>
-{
-  var database = serviceProvider.GetService<IMongoDatabase>();
-  return new MongoRepository<Item>(database, "items");
-});
+builder.Services.AddMongo()
+                .AddMongoRepository<Item>("items");
 
 builder.Services.AddControllers(options =>
 {
